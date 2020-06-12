@@ -1,0 +1,23 @@
+Github2jenkins 
+
+Have config yaml which determines how the incoming GitHub request is mapped to a set of Jenkins jobs with with corresponding parameters
+
+Rudimentary diffing can be done by looking at the files which have been modified
+
+The idea is that there are multiple projects in a repo
+
+jenkins-url: "something"
+ci-dir: "ci"
+projects:
+  first-project:
+    path: "./first"
+    jobs:
+      - branch: "master"
+        pipeline: "deploy1.groovy"
+        parameters: "some kind of expression"
+        token: "A23FD37E"
+      - branch: "*"
+        pipeline: "deploy1.groovy"
+        parameters: "other"
+
+

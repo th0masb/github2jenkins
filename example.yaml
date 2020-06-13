@@ -1,0 +1,16 @@
+jenkins-url: https://myhost:8443
+ci-dir: ci
+projects:
+  - path: first/
+    jobs:
+      - branch: master
+        jenkins-job: my-job
+        parameters: Some expression
+        token: A23DWDASD
+        diff-matcher: src/**
+      - branch: "*"
+        jenkins-job: job2
+  - path: second/path/
+    jobs:
+      - branch: "*"
+        job: second-job

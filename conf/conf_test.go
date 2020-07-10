@@ -36,7 +36,7 @@ projects:
 		},
 	}
 
-	assertParsedConfigAsExpected(&expectedConfig, &configYaml, t)
+	assertParsedConfigAsExpected(&expectedConfig, configYaml, t)
 
 }
 
@@ -104,11 +104,11 @@ projects:
 		},
 	}
 
-	assertParsedConfigAsExpected(&expectedConfig, &configYaml, t)
+	assertParsedConfigAsExpected(&expectedConfig, configYaml, t)
 }
 
-func assertParsedConfigAsExpected(expected *Config, yaml *string, t *testing.T) {
-	actual, err := interpretConfig([]byte(*yaml))
+func assertParsedConfigAsExpected(expected *Config, yaml string, t *testing.T) {
+	actual, err := interpretConfig([]byte(yaml))
 	if err != nil {
 		t.Errorf("Error during parsing: %s\n", err)
 	} else if !cmp.Equal(*expected, actual) {

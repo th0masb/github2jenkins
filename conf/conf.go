@@ -24,8 +24,8 @@ type Job struct {
 	DiffMatcher string `yaml:"diff-matcher"`
 }
 
-func LoadConfig(path *string) (Config, error) {
-	fileBytes, readErr := ioutil.ReadFile(*path)
+func LoadConfig(path string) (Config, error) {
+	fileBytes, readErr := ioutil.ReadFile(path)
 	if readErr != nil {
 		return Config{}, readErr
 	} else {

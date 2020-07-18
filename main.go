@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+    "io/ioutil"
 )
 
 const yamlRx string = `^.*[.]ya?ml$`
@@ -28,8 +29,8 @@ func main() {
 	config, err := conf.LoadConfig(args.configPath)
 	if err == nil {
 		log.Printf("Loaded %+v\n", config)
-		//    http.HandleFunc("/path", handler)
-		//    log.Fatal(http.ListenAndServe(":8080", nil))
+		http.HandleFunc("/path", handler)
+		log.Fatal(http.ListenAndServe(":8080", nil))
 	} else {
 		log.Fatalf("Failed to load config: %s\n", err)
 	}
@@ -45,5 +46,8 @@ func parseArgs() args {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
+    body, _ := ioutil.ReadAll(r.Body)
+    w.Header().Add("Custom-Header", "42")
+    w.WriteHeader(http.StatusOK)
+    fmt.Fprintf(w, "Hi there, received\nurl: %s\nheaders: %s\nbody: %s!\n", r.URL, r.Header, body)
 }

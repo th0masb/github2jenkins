@@ -3,47 +3,62 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/th0masb/github2jenkins/conf"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
 )
 
-const yamlRx string = `^.*[.]ya?ml$`
 const configFlag string = "config"
-const configFlagDescription string = "Provides a path to the yaml file for configuring the server"
+const yamlRx string = `^.*[.]ya?ml$`
+const portFlag string = "port"
 
 type args struct {
 	configPath string
+	serverPort string
 }
 
 func main() {
 	args := parseArgs()
-	yamlMatcher := regexp.MustCompile(yamlRx)
-	if !yamlMatcher.MatchString(args.configPath) {
-		log.Fatalf("%s is not a path to a yaml file\n", args.configPath)
-	} else {
-		log.Printf("Config path set as %s\n", args.configPath)
-	}
-	config, err := conf.LoadConfig(args.configPath)
+	config, err := LoadConfig(args.configPath)
 	if err == nil {
 		log.Printf("Loaded %+v\n", config)
-		//    http.HandleFunc("/path", handler)
-		//    log.Fatal(http.ListenAndServe(":8080", nil))
+		http.HandleFunc("/", handler)
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", args.serverPort), nil))
 	} else {
 		log.Fatalf("Failed to load config: %s\n", err)
 	}
 }
 
 func parseArgs() args {
-	configPath := flag.String(configFlag, "", configFlagDescription)
+	configPath := flag.String(configFlag, "", "")
+	serverPort := flag.String(portFlag, "", "")
 	flag.Parse()
-	if *configPath == "" {
-		log.Fatalf("Must provide config path: github2jenkins --config /path/to/config.yaml\n")
+	yamlMatcher := regexp.MustCompile(yamlRx)
+	if !yamlMatcher.MatchString(*configPath) {
+		log.Fatalf("Must provide .yaml config path: github2jenkins --config /path/to/config.yaml\n")
+	} else {
+		log.Printf("Config path set as %s\n", *configPath)
 	}
-	return args{configPath: *configPath}
+	return args{configPath: *configPath, serverPort: *serverPort}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-}
+     body, bodyReadErr := ioutil.ReadAll(r.Body)
+     if bodyReadErr != nil {
+         w.WriteHeader(http.StatusBadRequest)
+         log.Printf("Unable to read request body: %s\n", bodyReadErr)
+         return
+     } 
+ 
+     hook, parseErr := ParseRequest(r.Header, body)
+     if parseErr != nil {
+         w.WriteHeader(http.StatusBadRequest)
+         log.Printf("Unable to parse request body: %s %s\n", parseErr, body)
+         return
+ 
+     }
+         
+     w.WriteHeader(http.StatusOK)
+     log.Printf("Received hook: %+v\n", hook)
+ }

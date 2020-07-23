@@ -20,4 +20,3 @@ projects:
         pipeline: "deploy1.groovy"
         parameters: "other"
 
-

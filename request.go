@@ -15,7 +15,7 @@ func ParseRequest(headers http.Header, body []byte) (Hook, error) {
 	switch reqType := headers.Get(hookTypeHeaderKey); reqType {
 	case pushHookId:
 		hook := PushHook{}
-        err := json.Unmarshal(body, &hook)
+		err := json.Unmarshal(body, &hook)
 		return hook, err
 	case pingHookId:
 		return PingHook{}, nil
@@ -30,12 +30,12 @@ type PushHook struct {
 	After      string     `json:"after"`
 	Repository Repository `json:"repository"`
 	Pusher     Pusher     `json:"pusher"`
-    Compare string `json:"compare"`
+	Compare    string     `json:"compare"`
 	Commits    []Commit   `json:"commits"`
 }
 
 type Commit struct {
-    Id string `json:"id"`
+	Id       string   `json:"id"`
 	Added    []string `json:"added"`
 	Removed  []string `json:"removed"`
 	Modified []string `json:"modified"`
@@ -57,5 +57,5 @@ type Hook interface {
 	isHook()
 }
 
-func (_ PushHook) isHook()        {}
-func (_ PingHook) isHook()        {}
+func (_ PushHook) isHook() {}
+func (_ PingHook) isHook() {}

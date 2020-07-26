@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+    "github.com/th0masb/github2jenkins/g2j"
 )
 
 const configFlag string = "config"
@@ -20,7 +21,7 @@ type args struct {
 
 func main() {
 	args := parseArgs()
-	config, err := LoadConfig(args.configPath)
+	config, err := g2j.LoadConfig(args.configPath)
 	if err == nil {
 		log.Printf("Loaded %+v\n", config)
 		http.HandleFunc("/", handler)
@@ -44,21 +45,21 @@ func parseArgs() args {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-     body, bodyReadErr := ioutil.ReadAll(r.Body)
-     if bodyReadErr != nil {
-         w.WriteHeader(http.StatusBadRequest)
-         log.Printf("Unable to read request body: %s\n", bodyReadErr)
-         return
-     } 
- 
-     hook, parseErr := ParseRequest(r.Header, body)
-     if parseErr != nil {
-         w.WriteHeader(http.StatusBadRequest)
-         log.Printf("Unable to parse request body: %s %s\n", parseErr, body)
-         return
- 
-     }
-         
-     w.WriteHeader(http.StatusOK)
-     log.Printf("Received hook: %+v\n", hook)
- }
+	body, bodyReadErr := ioutil.ReadAll(r.Body)
+	if bodyReadErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("Unable to read request body: %s\n", bodyReadErr)
+		return
+	}
+
+	hook, parseErr := ParseRequest(r.Header, body)
+	if parseErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("Unable to parse request body: %s %s\n", parseErr, body)
+		return
+
+	}
+
+	w.WriteHeader(http.StatusOK)
+	log.Printf("Received hook: %+v\n", hook)
+}

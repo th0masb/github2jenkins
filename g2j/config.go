@@ -1,4 +1,4 @@
-package main
+package g2j
 
 import (
 	"gopkg.in/yaml.v3"
@@ -6,9 +6,14 @@ import (
 )
 
 type Config struct {
-	JenkinsUrl string    `yaml:"jenkins-url"`
-	DirCI      string    `yaml:"ci-dir"`
-	Projects   []Project `yaml:",flow"`
+	JenkinsUrl   string `yaml:"jenkins-url"`
+	Secrets      string
+	Repositories []Repository `yaml:",flow"`
+}
+
+type Repository struct {
+	Name     string
+	Projects []Project `yaml:",flow"`
 }
 
 type Project struct {
@@ -20,7 +25,7 @@ type Job struct {
 	Branch      string
 	Name        string
 	Parameters  string
-	Token       string
+	TokenKey    string `yaml:"token-key"`
 	DiffMatcher string `yaml:"diff-matcher"`
 }
 

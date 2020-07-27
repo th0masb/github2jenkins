@@ -21,26 +21,26 @@ func TestPartialConfig(t *testing.T) {
 
 	expectedConfig := Config{
 		JenkinsUrl: "",
-        Secrets: "/path/to/secrets.env",
-        Repositories: []Repository{
-            Repository{
-                Name: "guthub2jenkins",
-		        Projects: []Project{
-		        	Project{
-		        		Path: "first/",
-		        		Jobs: []Job{
-		        			Job{
-		        				Branch:      "master",
-		        				Name:        "my-job",
-		        				Parameters:  "",
-		        				TokenKey:       "A",
-		        				DiffMatcher: "src/**",
-		        			},
-		        		},
-		        	},
-		        },
-            },
-        },
+		Secrets:    "/path/to/secrets.env",
+		Repositories: []Repository{
+			Repository{
+				Name: "guthub2jenkins",
+				Projects: []Project{
+					Project{
+						Path: "first/",
+						Jobs: []Job{
+							Job{
+								Branch:      "master",
+								Name:        "my-job",
+								Parameters:  "",
+								TokenKey:    "A",
+								DiffMatcher: "src/**",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	assertParsedConfigAsExpected(&expectedConfig, configYaml, t)
@@ -91,69 +91,69 @@ func TestFullConfig(t *testing.T) {
 
 	expectedConfig := Config{
 		JenkinsUrl: "https://myhost:8443",
-        Secrets: "/path/to/secrets.env",
-        Repositories: []Repository{
-            Repository{
-                Name: "github2jenkins",
-		        Projects: []Project{
-		        	Project{
-		        		Path: "first/",
-		        		Jobs: []Job{
-		        			Job{
-		        				Branch:      "master",
-		        				Name:        "my-job",
-		        				Parameters:  "Some expression",
-		        				TokenKey:       "A",
-		        				DiffMatcher: "src/**",
-		        			},
-		        			Job{
-		        				Branch:      "*",
-		        				Name:        "job2",
-		        				Parameters:  "Other expression",
-		        				TokenKey:       "B",
-		        				DiffMatcher: "any",
-		        			},
-		        		},
-		        	},
-		        	Project{
-		        		Path: "second/path/",
-		        		Jobs: []Job{
-		        			Job{
-		        				Branch:      "master",
-		        				Name:        "my-job",
-		        				Parameters:  "Some expression",
-		        				TokenKey:       "A",
-		        				DiffMatcher: "src/**",
-		        			},
-		        		},
-		        	},
-		        },
-            },
-            Repository{
-                Name: "github2jenkins2",
-		        Projects: []Project{
-		        	Project{
-		        		Path: "first/",
-		        		Jobs: []Job{
-		        			Job{
-		        				Branch:      "master",
-		        				Name:        "my-job",
-		        				Parameters:  "Some expression",
-		        				TokenKey:       "A",
-		        				DiffMatcher: "src/**",
-		        			},
-		        			Job{
-		        				Branch:      "*",
-		        				Name:        "job2",
-		        				Parameters:  "Other expression",
-		        				TokenKey:       "B",
-		        				DiffMatcher: "any",
-		        			},
-		        		},
-		        	},
-		        },
-            },
-        },
+		Secrets:    "/path/to/secrets.env",
+		Repositories: []Repository{
+			Repository{
+				Name: "github2jenkins",
+				Projects: []Project{
+					Project{
+						Path: "first/",
+						Jobs: []Job{
+							Job{
+								Branch:      "master",
+								Name:        "my-job",
+								Parameters:  "Some expression",
+								TokenKey:    "A",
+								DiffMatcher: "src/**",
+							},
+							Job{
+								Branch:      "*",
+								Name:        "job2",
+								Parameters:  "Other expression",
+								TokenKey:    "B",
+								DiffMatcher: "any",
+							},
+						},
+					},
+					Project{
+						Path: "second/path/",
+						Jobs: []Job{
+							Job{
+								Branch:      "master",
+								Name:        "my-job",
+								Parameters:  "Some expression",
+								TokenKey:    "A",
+								DiffMatcher: "src/**",
+							},
+						},
+					},
+				},
+			},
+			Repository{
+				Name: "github2jenkins2",
+				Projects: []Project{
+					Project{
+						Path: "first/",
+						Jobs: []Job{
+							Job{
+								Branch:      "master",
+								Name:        "my-job",
+								Parameters:  "Some expression",
+								TokenKey:    "A",
+								DiffMatcher: "src/**",
+							},
+							Job{
+								Branch:      "*",
+								Name:        "job2",
+								Parameters:  "Other expression",
+								TokenKey:    "B",
+								DiffMatcher: "any",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	assertParsedConfigAsExpected(&expectedConfig, configYaml, t)

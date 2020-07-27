@@ -1,4 +1,4 @@
-package main
+package hook
 
 import (
 	"encoding/json"
@@ -11,20 +11,20 @@ const pushHookId string = "push"
 const pullRequestId string = "pull-request"
 const pingHookId string = "ping"
 
-func ParseRequest(headers http.Header, body []byte) (Hook, error) {
+func Parse(headers http.Header, body []byte) (Hook, error) {
 	switch reqType := headers.Get(hookTypeHeaderKey); reqType {
 	case pushHookId:
-		hook := PushHook{}
+		hook := Push{}
 		err := json.Unmarshal(body, &hook)
 		return hook, err
 	case pingHookId:
-		return PingHook{}, nil
+		return Ping{}, nil
 	default:
-		return PushHook{}, fmt.Errorf("Unrecognised hook type: %s", reqType)
+		return Push{}, fmt.Errorf("Unrecognised hook type: %s", reqType)
 	}
 }
 
-type PushHook struct {
+type Push struct {
 	Ref        string     `json:"ref"`
 	Before     string     `json:"before"`
 	After      string     `json:"after"`
@@ -50,12 +50,12 @@ type Repository struct {
 	Name string `json:"name"`
 }
 
-type PingHook struct {
+type Ping struct {
 }
 
 type Hook interface {
 	isHook()
 }
 
-func (_ PushHook) isHook() {}
-func (_ PingHook) isHook() {}
+func (_ Push) isHook() {}
+func (_ Ping) isHook() {}

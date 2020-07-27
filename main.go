@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/th0masb/github2jenkins/g2j"
+	"github.com/th0masb/github2jenkins/hook"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
-    "github.com/th0masb/github2jenkins/g2j"
 )
 
 const configFlag string = "config"
@@ -45,19 +46,18 @@ func parseArgs() args {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	body, bodyReadErr := ioutil.ReadAll(r.Body)
-	if bodyReadErr != nil {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("Unable to read request body: %s\n", bodyReadErr)
+		log.Printf("Unable to read request body: %s\n", err)
 		return
 	}
 
-	hook, parseErr := ParseRequest(r.Header, body)
-	if parseErr != nil {
+	hook, err := hook.Parse(r.Header, body)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("Unable to parse request body: %s %s\n", parseErr, body)
+		log.Printf("Unable to parse request body: %s %s\n", err, body)
 		return
-
 	}
 
 	w.WriteHeader(http.StatusOK)

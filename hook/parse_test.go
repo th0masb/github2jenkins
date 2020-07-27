@@ -1,4 +1,4 @@
-package main
+package hook
 
 import (
 	"github.com/google/go-cmp/cmp"
@@ -12,14 +12,14 @@ func TestPingHookParse(t *testing.T) {
 	body := []byte("")
 
 	// action
-	hook, err := ParseRequest(header, body)
+	hook, err := Parse(header, body)
 
 	// assert
 	if err != nil {
 		t.Fatalf("Expected success: %s\n", err)
 	}
 
-	if hook != (PingHook{}) {
+	if hook != (Ping{}) {
 		t.Fatalf("Expected empty ping hook struct: %+v\n", hook)
 	}
 }
@@ -61,14 +61,14 @@ func TestPushHookParse(t *testing.T) {
 	)
 
 	// action
-	hook, err := ParseRequest(header, body)
+	hook, err := Parse(header, body)
 
 	// assert
 	if err != nil {
 		t.Fatalf("Expected success: %s\n", err)
 	}
 
-	expected := PushHook{
+	expected := Push{
 		Ref:    "123",
 		Before: "beforeHash",
 		After:  "afterHash",

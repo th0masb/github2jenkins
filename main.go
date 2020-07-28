@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/th0masb/github2jenkins/diff"
 	"github.com/th0masb/github2jenkins/g2j"
 	"github.com/th0masb/github2jenkins/hook"
 	"io/ioutil"
@@ -11,14 +12,18 @@ import (
 	"regexp"
 )
 
-const configFlag string = "config"
-const yamlRx string = `^.*[.]ya?ml$`
-const portFlag string = "port"
+const (
+	configFlag string = "config"
+	yamlRx     string = `^.*[.]ya?ml$`
+	portFlag   string = "port"
+)
 
 type args struct {
 	configPath string
 	serverPort string
 }
+
+var diffClient = diff.CreateRestClient()
 
 func main() {
 	args := parseArgs()
@@ -52,14 +57,25 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Unable to read request body: %s\n", err)
 		return
 	}
-
-	hook, err := hook.Parse(r.Header, body)
+	h, err := hook.Parse(r.Header, body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("Unable to parse request body: %s %s\n", err, body)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
-	log.Printf("Received hook: %+v\n", hook)
+	switch v := h.(type) {
+	case hook.Ping:
+		log.Printf("Received ping hook\n")
+		w.WriteHeader(http.StatusOK)
+	case hook.Push:
+		log.Printf("Received push hook, requesting diff\n")
+		filesChanged, err := diffClient.RequestPushDiff(&v)
+		if err != nil {
+			log.Printf("Error calling diff client: %s\n", err)
+			w.WriteHeader(http.StatusFailedDependency)
+		} else {
+			log.Printf("Files changed: %s\n", filesChanged)
+			w.WriteHeader(http.StatusOK)
+		}
+	}
 }

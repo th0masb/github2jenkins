@@ -35,7 +35,10 @@ func TestPushHookParse(t *testing.T) {
             "before": "beforeHash",
             "after": "afterHash",
             "repository": {
-                "name": "github2jenkins"
+                "name": "github2jenkins",
+				"owner": {
+					"name": "th0masb"
+				}
             },
             "pusher": {
                 "name": "Tom",
@@ -74,25 +77,13 @@ func TestPushHookParse(t *testing.T) {
 		After:  "afterHash",
 		Repository: Repository{
 			Name: "github2jenkins",
+			Owner: Owner{
+				Name: "th0masb",
+			},
 		},
 		Pusher: Pusher{
 			Name:  "Tom",
 			Email: "Email",
-		},
-		Compare: "compare-url",
-		Commits: []Commit{
-			Commit{
-				Id:       "1",
-				Added:    []string{},
-				Removed:  []string{},
-				Modified: []string{"first"},
-			},
-			Commit{
-				Id:       "2",
-				Added:    []string{"something"},
-				Removed:  []string{},
-				Modified: []string{},
-			},
 		},
 	}
 

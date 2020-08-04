@@ -6,10 +6,12 @@ import (
 	"net/http"
 )
 
-const hookTypeHeaderKey string = "X-Github-Event"
-const pushHookId string = "push"
-const pullRequestId string = "pull-request"
-const pingHookId string = "ping"
+const (
+	hookTypeHeaderKey string = "X-Github-Event"
+	pushHookId        string = "push"
+	pullRequestId     string = "pull-request"
+	pingHookId        string = "ping"
+)
 
 func Parse(headers http.Header, body []byte) (Hook, error) {
 	switch reqType := headers.Get(hookTypeHeaderKey); reqType {
@@ -25,29 +27,25 @@ func Parse(headers http.Header, body []byte) (Hook, error) {
 }
 
 type Push struct {
-	Ref        string     `json:"ref"`
-	Before     string     `json:"before"`
-	After      string     `json:"after"`
-	Repository Repository `json:"repository"`
-	Pusher     Pusher     `json:"pusher"`
-	Compare    string     `json:"compare"`
-	Commits    []Commit   `json:"commits"`
-}
-
-type Commit struct {
-	Id       string   `json:"id"`
-	Added    []string `json:"added"`
-	Removed  []string `json:"removed"`
-	Modified []string `json:"modified"`
+	Ref        string
+	Before     string
+	After      string
+	Repository Repository
+	Pusher     Pusher
 }
 
 type Pusher struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name  string
+	Email string
 }
 
 type Repository struct {
-	Name string `json:"name"`
+	Name  string
+	Owner Owner
+}
+
+type Owner struct {
+	Name string
 }
 
 type Ping struct {

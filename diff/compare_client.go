@@ -2,18 +2,19 @@ package diff
 
 import (
 	"fmt"
-	"github.com/th0masb/github2jenkins/hook"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/th0masb/github2jenkins/hook"
 )
 
 const (
 	diffHeaderKey      string = "Accept"
 	diffHeaderValue    string = "application/vnd.github.VERSION.diff"
-	baseUrl            string = "https://api.github.com/repos"
+	baseURL            string = "https://api.github.com/repos"
 	getMethod          string = "GET"
 	diffRegexPattern   string = `^diff --git.+$`
 	changedFilePattern string = `\s[ab](/\S+)+`
@@ -22,14 +23,17 @@ const (
 var diffRegex = regexp.MustCompile(diffRegexPattern)
 var changedFileRegex = regexp.MustCompile(changedFilePattern)
 
+// Client Testable wrapper around http requests
 type Client struct{ requester Requester }
 
+// Requester Function mapping http request to response
 type Requester interface {
 	Get(request *http.Request) (*http.Response, error)
 }
 
 type requesterImpl struct{ delegate *http.Client }
 
+// CreateRestClient Creates a rest client to make http calls
 func CreateRestClient() Client {
 	httpClient := http.Client{}
 	return Client{
@@ -39,14 +43,15 @@ func CreateRestClient() Client {
 	}
 }
 
-func (c Client) RequestPushDiff(push *hook.Push) ([]string, error) {
+// RequestPushDiff Fetches diff caused by github push
+func (c *Client) RequestPushDiff(push *hook.Push) ([]string, error) {
 	repoName := push.Repository.Name
 	ownerName := push.Repository.Owner.Name
 	before, after := push.Before, push.After
-	url := fmt.Sprintf("%s/%s/%s/compare/%s...%s", baseUrl, ownerName, repoName, before, after)
+	url := fmt.Sprintf("%s/%s/%s/compare/%s...%s", baseURL, ownerName, repoName, before, after)
 	body, err := c.getDiff(url)
 	if err != nil {
-		return make([]string, 0), err
+		return nil, err
 	}
 	lines := strings.Split(string(body), "\n")
 	return extractChangedFiles(lines), err
@@ -69,7 +74,7 @@ func extractChangedFiles(diffLines []string) []string {
 	return changedFiles
 }
 
-func (c Client) getDiff(url string) (string, error) {
+func (c *Client) getDiff(url string) (string, error) {
 	req, err := http.NewRequest(getMethod, url, nil)
 	req.Header.Add(diffHeaderKey, diffHeaderValue)
 	if err != nil {
@@ -81,7 +86,7 @@ func (c Client) getDiff(url string) (string, error) {
 	}
 	if isErrorCode(resp.StatusCode) {
 		log.Printf("Bad response: %s\n", resp.Status)
-		return "", fmt.Errorf("Bad response: %s\n", resp.Status)
+		return "", fmt.Errorf("Bad response: %s", resp.Status)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)

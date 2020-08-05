@@ -1,9 +1,10 @@
 package hook
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPingHookParse(t *testing.T) {
@@ -15,13 +16,8 @@ func TestPingHookParse(t *testing.T) {
 	hook, err := Parse(header, body)
 
 	// assert
-	if err != nil {
-		t.Fatalf("Expected success: %s\n", err)
-	}
-
-	if hook != (Ping{}) {
-		t.Fatalf("Expected empty ping hook struct: %+v\n", hook)
-	}
+	assert.Nil(t, err)
+	assert.Equal(t, Ping{}, hook)
 }
 
 func TestPushHookParse(t *testing.T) {
@@ -63,14 +59,6 @@ func TestPushHookParse(t *testing.T) {
         `,
 	)
 
-	// action
-	hook, err := Parse(header, body)
-
-	// assert
-	if err != nil {
-		t.Fatalf("Expected success: %s\n", err)
-	}
-
 	expected := Push{
 		Ref:    "123",
 		Before: "beforeHash",
@@ -87,9 +75,12 @@ func TestPushHookParse(t *testing.T) {
 		},
 	}
 
-	if !cmp.Equal(expected, hook) {
-		t.Fatalf("Expected:\n%+v\nbut received:\n%+v\n", expected, hook)
-	}
+	// action
+	hook, err := Parse(header, body)
+
+	// assert
+	assert.Nil(t, err)
+	assert.Equal(t, expected, hook)
 }
 
 func createHeader(key, value string) http.Header {

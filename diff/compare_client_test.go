@@ -2,14 +2,14 @@ package diff
 
 import (
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/google/go-cmp/cmp"
-	"github.com/th0masb/github2jenkins/diff/mock_diff"
-	"github.com/th0masb/github2jenkins/hook"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/th0masb/github2jenkins/hook"
 )
 
 const (
@@ -18,8 +18,15 @@ const (
 	repoName            string = "repo"
 	repoOwnerName       string = "th0masb"
 	expectedAcceptValue string = "application/vnd.github.VERSION.diff"
-	expectedBaseUrl     string = "https://api.github.com/repos"
+	expectedBaseURL     string = "https://api.github.com/repos"
 )
+
+type mockRequester struct{ mock.Mock }
+
+func (m *mockRequester) Get(request *http.Request) (*http.Response, error) {
+	args := m.Called(request)
+	return args.Get(0).(*http.Response), args.Error(1)
+}
 
 func TestRequestFailPath(t *testing.T) {
 	// assemble
@@ -34,24 +41,21 @@ func TestRequestFailPath(t *testing.T) {
 		},
 	}
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRequester := mock_diff.NewMockRequester(ctrl)
+	mockRequester := mockRequester{mock.Mock{}}
 	mockRequester.
-		EXPECT().
-		Get(gomock.Eq(request(&pushHook))).
-		Return(response(http.StatusServiceUnavailable, ""))
+		On("Get", request(&pushHook)).
+		Return(response(http.StatusServiceUnavailable, "")).
+		Once()
 
-	underTest := Client{requester: mockRequester}
+	underTest := Client{requester: &mockRequester}
 
 	// act
-	_, err := underTest.RequestPushDiff(&pushHook)
+	changedFiles, err := underTest.RequestPushDiff(&pushHook)
 
 	// assert
-	if err == nil {
-		t.Errorf("Expected error but received nil\n")
-	}
+	assert.Nil(t, changedFiles)
+	assert.NotNil(t, err)
+	mockRequester.AssertExpectations(t)
 }
 
 func TestRequestHappyPath(t *testing.T) {
@@ -74,30 +78,27 @@ func TestRequestHappyPath(t *testing.T) {
 		},
 	}
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRequester := mock_diff.NewMockRequester(ctrl)
+	mockRequester := mockRequester{mock.Mock{}}
 	mockRequester.
-		EXPECT().
-		Get(gomock.Eq(request(&pushHook))).
-		Return(response(http.StatusOK, responseBody))
+		On("Get", request(&pushHook)).
+		Return(response(http.StatusOK, responseBody)).
+		Once()
 
-	underTest := Client{requester: mockRequester}
+	underTest := Client{requester: &mockRequester}
 
 	// act
-	filesChanged, _ := underTest.RequestPushDiff(&pushHook)
+	filesChanged, err := underTest.RequestPushDiff(&pushHook)
 
 	// assert
-	if !cmp.Equal(filesChanged, expectedFiles) {
-		t.Errorf("Received: %s\n", filesChanged)
-	}
+	assert.Equal(t, expectedFiles, filesChanged)
+	assert.Nil(t, err)
+	mockRequester.AssertExpectations(t)
 }
 
 func request(push *hook.Push) *http.Request {
 	url := fmt.Sprintf(
 		"%s/%s/%s/compare/%s...%s",
-		expectedBaseUrl,
+		expectedBaseURL,
 		push.Repository.Owner.Name,
 		push.Repository.Name,
 		push.Before, push.After,

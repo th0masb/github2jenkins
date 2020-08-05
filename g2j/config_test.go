@@ -1,11 +1,13 @@
 package g2j
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPartialConfig(t *testing.T) {
+	// assemble
 	configYaml := `
         secrets: "/path/to/secrets.env"
         repositories:
@@ -20,8 +22,12 @@ func TestPartialConfig(t *testing.T) {
     `
 
 	expectedConfig := Config{
-		JenkinsUrl: "",
-		Secrets:    "/path/to/secrets.env",
+		Jenkins: Jenkins{
+			URL:                "",
+			Protocol:           "",
+			TLSCertificatePath: "",
+		},
+		Secrets: "/path/to/secrets.env",
 		Repositories: []Repository{
 			Repository{
 				Name: "guthub2jenkins",
@@ -43,14 +49,22 @@ func TestPartialConfig(t *testing.T) {
 		},
 	}
 
-	assertParsedConfigAsExpected(&expectedConfig, configYaml, t)
+	// act
+	actualConfig, err := interpretConfig([]byte(configYaml))
 
+	// assert
+	assert.Nil(t, err)
+	assert.Equal(t, expectedConfig, actualConfig)
 }
 
 func TestFullConfig(t *testing.T) {
+	// assemble
 	configYaml := `
-        jenkins-url: https://myhost:8443
-        secrets: /path/to/secrets.env
+        secrets: "/path/to/secrets.json"
+        jenkins: 
+          url: https://myhost:8443
+          protocol: https
+          tls-cert: /path/to/cert
         repositories:
          - name: github2jenkins
            projects:
@@ -90,8 +104,12 @@ func TestFullConfig(t *testing.T) {
             `
 
 	expectedConfig := Config{
-		JenkinsUrl: "https://myhost:8443",
-		Secrets:    "/path/to/secrets.env",
+		Secrets: "/path/to/secrets.json",
+		Jenkins: Jenkins{
+			URL:                "https://myhost:8443",
+			Protocol:           "https",
+			TLSCertificatePath: "/path/to/cert",
+		},
 		Repositories: []Repository{
 			Repository{
 				Name: "github2jenkins",
@@ -156,14 +174,10 @@ func TestFullConfig(t *testing.T) {
 		},
 	}
 
-	assertParsedConfigAsExpected(&expectedConfig, configYaml, t)
-}
+	// act
+	actualConfig, err := interpretConfig([]byte(configYaml))
 
-func assertParsedConfigAsExpected(expected *Config, yaml string, t *testing.T) {
-	actual, err := interpretConfig([]byte(yaml))
-	if err != nil {
-		t.Errorf("Error during parsing: %s\n", err)
-	} else if !cmp.Equal(*expected, actual) {
-		t.Errorf("Expected:\n%s\nbut received:\n%s\n", *expected, actual)
-	}
+	// assert
+	assert.Nil(t, err)
+	assert.Equal(t, expectedConfig, actualConfig)
 }

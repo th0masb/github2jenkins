@@ -8,7 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/th0masb/github2jenkins/hook"
+	"github.com/th0masb/github2jenkins/ingress/hook"
+	"github.com/th0masb/github2jenkins/tools"
 )
 
 const (
@@ -24,23 +25,11 @@ var diffRegex = regexp.MustCompile(diffRegexPattern)
 var changedFileRegex = regexp.MustCompile(changedFilePattern)
 
 // Client Testable wrapper around http requests
-type Client struct{ requester Requester }
-
-// Requester Function mapping http request to response
-type Requester interface {
-	Get(request *http.Request) (*http.Response, error)
-}
-
-type requesterImpl struct{ delegate *http.Client }
+type Client struct{ tools.HTTPRequester }
 
 // CreateRestClient Creates a rest client to make http calls
-func CreateRestClient() Client {
-	httpClient := http.Client{}
-	return Client{
-		requester: requesterImpl{
-			delegate: &httpClient,
-		},
-	}
+func CreateRestClient() *Client {
+	return &Client{tools.NewRestRequester()}
 }
 
 // RequestPushDiff Fetches diff caused by github push
@@ -48,7 +37,10 @@ func (c *Client) RequestPushDiff(push *hook.Push) ([]string, error) {
 	repoName := push.Repository.Name
 	ownerName := push.Repository.Owner.Name
 	before, after := push.Before, push.After
-	url := fmt.Sprintf("%s/%s/%s/compare/%s...%s", baseURL, ownerName, repoName, before, after)
+	url := fmt.Sprintf(
+		"%s/%s/%s/compare/%s...%s",
+		baseURL, ownerName, repoName, before, after,
+	)
 	body, err := c.getDiff(url)
 	if err != nil {
 		return nil, err
@@ -80,7 +72,7 @@ func (c *Client) getDiff(url string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	resp, err := c.requester.Get(req)
+	resp, err := c.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -95,8 +87,4 @@ func (c *Client) getDiff(url string) (string, error) {
 
 func isErrorCode(code int) bool {
 	return code < 200 || code > 299
-}
-
-func (ri requesterImpl) Get(request *http.Request) (*http.Response, error) {
-	return ri.delegate.Do(request)
 }

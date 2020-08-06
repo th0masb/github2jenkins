@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/th0masb/github2jenkins/hook"
+	"github.com/th0masb/github2jenkins/ingress/hook"
+	"github.com/th0masb/github2jenkins/tools"
 )
 
 const (
@@ -20,13 +20,6 @@ const (
 	expectedAcceptValue string = "application/vnd.github.VERSION.diff"
 	expectedBaseURL     string = "https://api.github.com/repos"
 )
-
-type mockRequester struct{ mock.Mock }
-
-func (m *mockRequester) Get(request *http.Request) (*http.Response, error) {
-	args := m.Called(request)
-	return args.Get(0).(*http.Response), args.Error(1)
-}
 
 func TestRequestFailPath(t *testing.T) {
 	// assemble
@@ -41,13 +34,13 @@ func TestRequestFailPath(t *testing.T) {
 		},
 	}
 
-	mockRequester := mockRequester{mock.Mock{}}
+	mockRequester := tools.NewMockRequester()
 	mockRequester.
-		On("Get", request(&pushHook)).
+		On("Do", request(&pushHook)).
 		Return(response(http.StatusServiceUnavailable, "")).
 		Once()
 
-	underTest := Client{requester: &mockRequester}
+	underTest := Client{&mockRequester}
 
 	// act
 	changedFiles, err := underTest.RequestPushDiff(&pushHook)
@@ -78,13 +71,13 @@ func TestRequestHappyPath(t *testing.T) {
 		},
 	}
 
-	mockRequester := mockRequester{mock.Mock{}}
+	mockRequester := tools.NewMockRequester()
 	mockRequester.
-		On("Get", request(&pushHook)).
+		On("Do", request(&pushHook)).
 		Return(response(http.StatusOK, responseBody)).
 		Once()
 
-	underTest := Client{requester: &mockRequester}
+	underTest := Client{&mockRequester}
 
 	// act
 	filesChanged, err := underTest.RequestPushDiff(&pushHook)

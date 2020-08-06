@@ -1,10 +1,8 @@
+secrets: /path/to/secrets.json
 jenkins:
   url: https://myhost:8443
   protocol: https
   tls-cert: /path/to/cert
-secrets:
-  format: json
-  location: /path/to/secrets.json
 repositories:
   - name: github2jenkins
     projects:

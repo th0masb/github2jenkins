@@ -73,18 +73,14 @@ func (c *Client) getDiff(url string) (string, error) {
 		return "", err
 	}
 	resp, err := c.Do(req)
+	defer resp.Body.Close()
 	if err != nil {
 		return "", err
 	}
-	if isErrorCode(resp.StatusCode) {
+	if tools.IsErrorCode(resp.StatusCode) {
 		log.Printf("Bad response: %s\n", resp.Status)
 		return "", fmt.Errorf("Bad response: %s", resp.Status)
 	}
-	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	return string(body), err
-}
-
-func isErrorCode(code int) bool {
-	return code < 200 || code > 299
 }

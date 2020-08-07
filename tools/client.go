@@ -13,3 +13,8 @@ type HTTPRequester interface {
 func NewRestRequester() HTTPRequester {
 	return &http.Client{}
 }
+
+// IsErrorCode Check if the given http status is an error code
+func IsErrorCode(code int) bool {
+	return code < 200 || code > 299
+}

@@ -2,9 +2,7 @@ package diff
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,10 +32,13 @@ func TestRequestFailPath(t *testing.T) {
 		},
 	}
 
+	mockBody := tools.NewMockBody("")
+	mockBody.On("Close").Return(nil).Once()
+
 	mockRequester := tools.NewMockRequester()
 	mockRequester.
 		On("Do", request(&pushHook)).
-		Return(response(http.StatusServiceUnavailable, "")).
+		Return(tools.Response(http.StatusServiceUnavailable, mockBody)).
 		Once()
 
 	underTest := Client{&mockRequester}
@@ -48,6 +49,7 @@ func TestRequestFailPath(t *testing.T) {
 	// assert
 	assert.Nil(t, changedFiles)
 	assert.NotNil(t, err)
+	mockBody.AssertExpectations(t)
 	mockRequester.AssertExpectations(t)
 }
 
@@ -71,10 +73,13 @@ func TestRequestHappyPath(t *testing.T) {
 		},
 	}
 
+	mockBody := tools.NewMockBody(responseBody)
+	mockBody.On("Close").Return(nil).Once()
+
 	mockRequester := tools.NewMockRequester()
 	mockRequester.
 		On("Do", request(&pushHook)).
-		Return(response(http.StatusOK, responseBody)).
+		Return(tools.Response(http.StatusOK, mockBody)).
 		Once()
 
 	underTest := Client{&mockRequester}
@@ -85,6 +90,7 @@ func TestRequestHappyPath(t *testing.T) {
 	// assert
 	assert.Equal(t, expectedFiles, filesChanged)
 	assert.Nil(t, err)
+	mockBody.AssertExpectations(t)
 	mockRequester.AssertExpectations(t)
 }
 
@@ -99,13 +105,4 @@ func request(push *hook.Push) *http.Request {
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("Accept", expectedAcceptValue)
 	return req
-}
-
-func response(statusCode int, body string) (*http.Response, error) {
-	resp := http.Response{
-		Status:     string(statusCode),
-		StatusCode: statusCode,
-		Body:       ioutil.NopCloser(strings.NewReader(body)),
-	}
-	return &resp, nil
 }

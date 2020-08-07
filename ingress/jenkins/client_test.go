@@ -6,11 +6,64 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/th0masb/github2jenkins/tools"
 )
 
 var clientConfig = ClientConfig{
 	JenkinsURL: "mock-url",
+}
+
+func TestBadURL(t *testing.T) {
+	// assemble
+	clientRequest := TriggerJobRequest{
+		JobName:    "mock\nob",
+		Cause:      "some-cause",
+		Token:      "ABC",
+		Parameters: nil,
+	}
+
+	mockRequester := tools.NewMockRequester()
+	mockRequester.On("Do", mock.Anything).Panic("Unexpected Call")
+
+	underTest := Client{config: clientConfig, delegate: &mockRequester}
+
+	// act
+	err := underTest.TriggerJob(clientRequest)
+
+	// assert
+	assert.NotNil(t, err)
+}
+
+func TestBadResponseCall(t *testing.T) {
+	// assemble
+	clientRequest := TriggerJobRequest{
+		JobName:    "mock-job",
+		Cause:      "some-cause",
+		Token:      "ABC",
+		Parameters: nil,
+	}
+
+	expectedURL := "mock-url/job/mock-job/build?token=ABC&cause=some-cause"
+
+	mockBody := tools.NewMockBody("")
+	mockBody.On("Close").Return(nil).Once()
+
+	mockRequester := tools.NewMockRequester()
+	mockRequester.
+		On("Do", createExpectedRequest(t, expectedURL)).
+		Return(tools.Response(http.StatusBadRequest, mockBody)).
+		Once()
+
+	underTest := Client{config: clientConfig, delegate: &mockRequester}
+
+	// act
+	err := underTest.TriggerJob(clientRequest)
+
+	// assert
+	assert.NotNil(t, err)
+	mockBody.AssertExpectations(t)
+	mockRequester.AssertExpectations(t)
 }
 
 func TestSuccessfulNilParametersCall(t *testing.T) {

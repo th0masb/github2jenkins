@@ -25,22 +25,32 @@ func (m *MockRequester) Do(request *http.Request) (*http.Response, error) {
 // MockBody An io.ReadCloser which allows to assert on closing
 type MockBody struct {
 	mock.Mock
+	isClosed bool
 	delegate io.Reader
 }
 
 func (mb *MockBody) Read(b []byte) (int, error) {
+	if mb.isClosed {
+		panic("Read after close")
+	}
 	return mb.delegate.Read(b)
 }
 
 func (mb *MockBody) Close() error {
+	if mb.isClosed {
+		panic("Double close")
+	}
+	mb.isClosed = true
 	args := mb.MethodCalled("Close")
 	return args.Error(0)
 }
 
 // NewMockBody Create a new body which allows assertions that closing has occurred
+// exactly once after all reads.
 func NewMockBody(data string) *MockBody {
 	return &MockBody{
 		mock.Mock{},
+		false,
 		strings.NewReader(data),
 	}
 }

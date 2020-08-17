@@ -14,7 +14,6 @@ import (
 type HookHandler struct {
 	diffClient diffClientWrapper
 	config     g2j.Config
-	secrets    g2j.Secrets
 }
 
 type diffClientWrapper interface {
@@ -23,13 +22,11 @@ type diffClientWrapper interface {
 
 // NewHookHandler create a new github hook handler
 func NewHookHandler(
-	config g2j.Config,
-	secrets g2j.Secrets,
+	config *g2j.Config,
 ) *HookHandler {
 	return &HookHandler{
 		diffClient: diff.CreateRestClient(),
-		config:     config,
-		secrets:    secrets,
+		config:     *config,
 	}
 }
 

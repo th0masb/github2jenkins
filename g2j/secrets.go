@@ -15,7 +15,7 @@ const (
 )
 
 // LoadSecrets Function loading the app secrets
-func LoadSecrets(secretsLocation string) (Secrets, error) {
+func loadSecrets(secretsLocation string) (Secrets, error) {
 	fileBytes, err := ioutil.ReadFile(secretsLocation)
 	if err != nil {
 		return make(map[string]string), err

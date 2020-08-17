@@ -30,13 +30,7 @@ func main() {
 	}
 	log.Printf("Loaded config %+v\n", config)
 
-	secrets, err := g2j.LoadSecrets(config.Secrets)
-	if err != nil {
-		log.Fatalf("Failed to load secrets: %s\n", err)
-	}
-	log.Printf("Loaded secrets.")
-
-	hookHandler := ingress.NewHookHandler(config, secrets)
+	hookHandler := ingress.NewHookHandler(config)
 
 	http.HandleFunc("/", hookHandler.Handle)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", args.serverPort), nil))

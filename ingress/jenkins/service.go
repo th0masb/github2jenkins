@@ -11,6 +11,15 @@ const (
 	negationMatchRune rune = '^'
 )
 
+type projectAndChangedFiles struct {
+	project      g2j.Project
+	changedFiles []string
+}
+
+type jobWithMatcher struct {
+	job g2j.Job
+}
+
 // TriggerService Decides which jobs should be triggered from a github event
 type TriggerService struct {
 	config TriggerServiceConfig

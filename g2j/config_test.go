@@ -1,33 +1,95 @@
 package g2j
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPartialConfig(t *testing.T) {
+func TestParseFailureDueToBadRegex(t *testing.T) {
 	// assemble
 	configYaml := `
-        secrets: "/path/to/secrets.env"
+        jenkins:
+          url: x
         repositories:
          - name: guthub2jenkins
            projects:
              - path: first/
                jobs:
-                 - branch: master
+                 - branch-matcher: [
                    name: my-job
                    token-key: A
-                   diff-matcher: src/**
+                   diff-matcher: ^src/*
     `
 
-	expectedConfig := Config{
+	secrets := map[string]string{
+		"A": "TokenA",
+	}
+
+	// act
+	config, err := interpretConfig([]byte(configYaml), secrets)
+
+	// assert
+	assert.NotNil(t, err)
+	assert.Equal(t, &Config{}, config)
+}
+
+func TestParseFailureDueToMissingToken(t *testing.T) {
+	// assemble
+	configYaml := `
+        jenkins:
+          url: x
+        repositories:
+         - name: guthub2jenkins
+           projects:
+             - path: first/
+               jobs:
+                 - branch-matcher: master
+                   name: my-job
+                   token-key: A
+                   diff-matcher: ^src/*
+    `
+
+	secrets := map[string]string{
+		"B": "TokenA",
+	}
+
+	// act
+	config, err := interpretConfig([]byte(configYaml), secrets)
+
+	// assert
+	assert.NotNil(t, err)
+	assert.Equal(t, &Config{}, config)
+}
+
+func TestPartialConfig(t *testing.T) {
+	// assemble
+	configYaml := `
+        jenkins:
+          url: x
+        repositories:
+         - name: guthub2jenkins
+           projects:
+             - path: first/
+               jobs:
+                 - branch-matcher: master
+                   name: my-job
+                   token-key: A
+                   diff-matcher: ^src/*
+    `
+
+	secrets := map[string]string{
+		"A": "TokenA",
+	}
+
+	expectedConfig := &Config{
 		Jenkins: Jenkins{
-			URL:                "",
+			URL:                "x",
 			Protocol:           "",
 			TLSCertificatePath: "",
 		},
-		Secrets: "/path/to/secrets.env",
+		Secrets: secrets,
 		Repositories: []Repository{
 			Repository{
 				Name: "guthub2jenkins",
@@ -36,11 +98,11 @@ func TestPartialConfig(t *testing.T) {
 						Path: "first/",
 						Jobs: []Job{
 							Job{
-								Branch:      "master",
-								Name:        "my-job",
-								Parameters:  "",
-								TokenKey:    "A",
-								DiffMatcher: "src/**",
+								BranchMatcher: regexp.MustCompile("master"),
+								Name:          "my-job",
+								Parameters:    "",
+								Token:         "TokenA",
+								DiffMatcher:   regexp.MustCompile(`^src/*`),
 							},
 						},
 					},
@@ -50,7 +112,7 @@ func TestPartialConfig(t *testing.T) {
 	}
 
 	// act
-	actualConfig, err := interpretConfig([]byte(configYaml))
+	actualConfig, err := interpretConfig([]byte(configYaml), secrets)
 
 	// assert
 	assert.Nil(t, err)
@@ -60,8 +122,7 @@ func TestPartialConfig(t *testing.T) {
 func TestFullConfig(t *testing.T) {
 	// assemble
 	configYaml := `
-        secrets: "/path/to/secrets.json"
-        jenkins: 
+        jenkins:
           url: https://myhost:8443
           protocol: https
           tls-cert: /path/to/cert
@@ -70,41 +131,46 @@ func TestFullConfig(t *testing.T) {
            projects:
              - path: first/
                jobs:
-                 - branch: master
+                 - branch-matcher: master
                    name: my-job
                    parameters: Some expression
                    token-key: A
-                   diff-matcher: src/**
-                 - branch: "*"
+                   diff-matcher: src/.*
+                 - branch-matcher: "master|dev"
                    name: job2
                    parameters: Other expression
                    token-key: B
                    diff-matcher: any
              - path: second/path/
                jobs:
-                 - branch: master
+                 - branch-matcher: master
                    name: my-job
                    parameters: Some expression
                    token-key: A
-                   diff-matcher: src/**
+                   diff-matcher: src/ci/.*
          - name: github2jenkins2
            projects:
              - path: first/
                jobs:
-                 - branch: master
+                 - branch-matcher: master
                    name: my-job
                    parameters: Some expression
                    token-key: A
-                   diff-matcher: src/**
-                 - branch: "*"
+                   diff-matcher: src/*
+                 - branch-matcher: ".*"
                    name: job2
                    parameters: Other expression
                    token-key: B
                    diff-matcher: any
-            `
+    `
 
-	expectedConfig := Config{
-		Secrets: "/path/to/secrets.json",
+	secrets := map[string]string{
+		"A": "TokenA",
+		"B": "TokenB",
+	}
+
+	expectedConfig := &Config{
+		Secrets: secrets,
 		Jenkins: Jenkins{
 			URL:                "https://myhost:8443",
 			Protocol:           "https",
@@ -118,18 +184,18 @@ func TestFullConfig(t *testing.T) {
 						Path: "first/",
 						Jobs: []Job{
 							Job{
-								Branch:      "master",
-								Name:        "my-job",
-								Parameters:  "Some expression",
-								TokenKey:    "A",
-								DiffMatcher: "src/**",
+								BranchMatcher: regexp.MustCompile("master"),
+								Name:          "my-job",
+								Parameters:    "Some expression",
+								Token:         "TokenA",
+								DiffMatcher:   regexp.MustCompile("src/.*"),
 							},
 							Job{
-								Branch:      "*",
-								Name:        "job2",
-								Parameters:  "Other expression",
-								TokenKey:    "B",
-								DiffMatcher: "any",
+								BranchMatcher: regexp.MustCompile("master|dev"),
+								Name:          "job2",
+								Parameters:    "Other expression",
+								Token:         "TokenB",
+								DiffMatcher:   regexp.MustCompile("any"),
 							},
 						},
 					},
@@ -137,11 +203,11 @@ func TestFullConfig(t *testing.T) {
 						Path: "second/path/",
 						Jobs: []Job{
 							Job{
-								Branch:      "master",
-								Name:        "my-job",
-								Parameters:  "Some expression",
-								TokenKey:    "A",
-								DiffMatcher: "src/**",
+								BranchMatcher: regexp.MustCompile("master"),
+								Name:          "my-job",
+								Parameters:    "Some expression",
+								Token:         "TokenA",
+								DiffMatcher:   regexp.MustCompile("src/ci/.*"),
 							},
 						},
 					},
@@ -154,18 +220,18 @@ func TestFullConfig(t *testing.T) {
 						Path: "first/",
 						Jobs: []Job{
 							Job{
-								Branch:      "master",
-								Name:        "my-job",
-								Parameters:  "Some expression",
-								TokenKey:    "A",
-								DiffMatcher: "src/**",
+								BranchMatcher: regexp.MustCompile("master"),
+								Name:          "my-job",
+								Parameters:    "Some expression",
+								Token:         "TokenA",
+								DiffMatcher:   regexp.MustCompile("src/*"),
 							},
 							Job{
-								Branch:      "*",
-								Name:        "job2",
-								Parameters:  "Other expression",
-								TokenKey:    "B",
-								DiffMatcher: "any",
+								BranchMatcher: regexp.MustCompile(".*"),
+								Name:          "job2",
+								Parameters:    "Other expression",
+								Token:         "TokenB",
+								DiffMatcher:   regexp.MustCompile("any"),
 							},
 						},
 					},
@@ -175,7 +241,7 @@ func TestFullConfig(t *testing.T) {
 	}
 
 	// act
-	actualConfig, err := interpretConfig([]byte(configYaml))
+	actualConfig, err := interpretConfig([]byte(configYaml), secrets)
 
 	// assert
 	assert.Nil(t, err)

@@ -14,7 +14,6 @@ const (
 	jsonExt string = ".json"
 )
 
-// LoadSecrets Function loading the app secrets
 func loadSecrets(secretsLocation string) (Secrets, error) {
 	fileBytes, err := ioutil.ReadFile(secretsLocation)
 	if err != nil {

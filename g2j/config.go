@@ -8,11 +8,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	projectPathRegex string = `|[0-9`
+)
+
 // Config The configuration of the application
 type Config struct {
 	Jenkins      Jenkins
 	Secrets      Secrets
-	Repositories []Repository
+	Repositories []*Repository
 }
 
 // YamlConfig structure of config in yaml form
@@ -31,7 +35,7 @@ type Jenkins struct {
 // Repository Configuration for a specific repository
 type Repository struct {
 	Name     string
-	Projects []Project
+	Projects []*Project
 }
 
 // YamlRepository structure of repository in yaml form
@@ -43,7 +47,7 @@ type YamlRepository struct {
 // Project Configuration for a project contained within a repo
 type Project struct {
 	Path string
-	Jobs []Job
+	Jobs []*Job
 }
 
 // YamlProject structure of project in yaml form
@@ -90,7 +94,6 @@ func interpretConfig(data []byte, secrets Secrets) (*Config, error) {
 	if err != nil {
 		return &Config{}, err
 	}
-	//panic(fmt.Sprintf("%+v", config))
 	return convertRawConfig(&config, secrets)
 }
 
@@ -106,14 +109,14 @@ func convertRawConfig(rawConfig *YamlConfig, secrets Secrets) (*Config, error) {
 	}, nil
 }
 
-func mapRepositorySlice(src []YamlRepository, secrets Secrets) ([]Repository, error) {
-	dest := make([]Repository, len(src))
+func mapRepositorySlice(src []YamlRepository, secrets Secrets) ([]*Repository, error) {
+	dest := make([]*Repository, len(src))
 	for i, r := range src {
 		mappedProjects, err := mapProjectSlice(r.Projects, secrets)
 		if err != nil {
 			return dest, err
 		}
-		dest[i] = Repository{
+		dest[i] = &Repository{
 			Name:     r.Name,
 			Projects: mappedProjects,
 		}
@@ -121,14 +124,14 @@ func mapRepositorySlice(src []YamlRepository, secrets Secrets) ([]Repository, er
 	return dest, nil
 }
 
-func mapProjectSlice(src []YamlProject, secrets Secrets) ([]Project, error) {
-	dest := make([]Project, len(src))
+func mapProjectSlice(src []YamlProject, secrets Secrets) ([]*Project, error) {
+	dest := make([]*Project, len(src))
 	for i, p := range src {
 		mappedJobs, err := mapJobSlice(p.Jobs, secrets)
 		if err != nil {
 			return dest, err
 		}
-		dest[i] = Project{
+		dest[i] = &Project{
 			Path: p.Path,
 			Jobs: mappedJobs,
 		}
@@ -136,8 +139,8 @@ func mapProjectSlice(src []YamlProject, secrets Secrets) ([]Project, error) {
 	return dest, nil
 }
 
-func mapJobSlice(src []YamlJob, secrets Secrets) ([]Job, error) {
-	dest := make([]Job, len(src))
+func mapJobSlice(src []YamlJob, secrets Secrets) ([]*Job, error) {
+	dest := make([]*Job, len(src))
 	for i, j := range src {
 		branchMatcher, err := regexp.Compile(j.BranchMatcher)
 		if err != nil {
@@ -151,7 +154,7 @@ func mapJobSlice(src []YamlJob, secrets Secrets) ([]Job, error) {
 		if !tokenWasPresent {
 			return dest, fmt.Errorf("Token with key %s not found for job %s", j.TokenKey, j.Name)
 		}
-		dest[i] = Job{
+		dest[i] = &Job{
 			Name:          j.Name,
 			Parameters:    j.Parameters,
 			Token:         token,

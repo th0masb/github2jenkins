@@ -90,14 +90,14 @@ func TestPartialConfig(t *testing.T) {
 			TLSCertificatePath: "",
 		},
 		Secrets: secrets,
-		Repositories: []Repository{
-			Repository{
+		Repositories: []*Repository{
+			&Repository{
 				Name: "guthub2jenkins",
-				Projects: []Project{
-					Project{
+				Projects: []*Project{
+					&Project{
 						Path: "first/",
-						Jobs: []Job{
-							Job{
+						Jobs: []*Job{
+							&Job{
 								BranchMatcher: regexp.MustCompile("master"),
 								Name:          "my-job",
 								Parameters:    "",
@@ -176,21 +176,21 @@ func TestFullConfig(t *testing.T) {
 			Protocol:           "https",
 			TLSCertificatePath: "/path/to/cert",
 		},
-		Repositories: []Repository{
-			Repository{
+		Repositories: []*Repository{
+			&Repository{
 				Name: "github2jenkins",
-				Projects: []Project{
-					Project{
+				Projects: []*Project{
+					&Project{
 						Path: "first/",
-						Jobs: []Job{
-							Job{
+						Jobs: []*Job{
+							&Job{
 								BranchMatcher: regexp.MustCompile("master"),
 								Name:          "my-job",
 								Parameters:    "Some expression",
 								Token:         "TokenA",
 								DiffMatcher:   regexp.MustCompile("src/.*"),
 							},
-							Job{
+							&Job{
 								BranchMatcher: regexp.MustCompile("master|dev"),
 								Name:          "job2",
 								Parameters:    "Other expression",
@@ -199,10 +199,10 @@ func TestFullConfig(t *testing.T) {
 							},
 						},
 					},
-					Project{
+					&Project{
 						Path: "second/path/",
-						Jobs: []Job{
-							Job{
+						Jobs: []*Job{
+							&Job{
 								BranchMatcher: regexp.MustCompile("master"),
 								Name:          "my-job",
 								Parameters:    "Some expression",
@@ -213,20 +213,20 @@ func TestFullConfig(t *testing.T) {
 					},
 				},
 			},
-			Repository{
+			&Repository{
 				Name: "github2jenkins2",
-				Projects: []Project{
-					Project{
+				Projects: []*Project{
+					&Project{
 						Path: "first/",
-						Jobs: []Job{
-							Job{
+						Jobs: []*Job{
+							&Job{
 								BranchMatcher: regexp.MustCompile("master"),
 								Name:          "my-job",
 								Parameters:    "Some expression",
 								Token:         "TokenA",
 								DiffMatcher:   regexp.MustCompile("src/*"),
 							},
-							Job{
+							&Job{
 								BranchMatcher: regexp.MustCompile(".*"),
 								Name:          "job2",
 								Parameters:    "Other expression",

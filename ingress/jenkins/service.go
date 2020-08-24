@@ -37,22 +37,37 @@ func (s TriggerService) TriggerJobs(
 	ref string,
 	changedFiles []string,
 ) error {
-	_, err := s.findRepository(repoName)
-	if err != nil {
-		return err
-	}
-
-	// Assign each project a subslice of the changedFiles according to whether
-	// the file path starts with the project path
-
-	// Remove the project path prefix from each of the changed files in the
-	// assigned slice
-
-	// For each job under each (project, changedFiles) pair check if it matches
-	// the ref and the set of changed files, if it does then trigger the job
+	//	repo, err := s.findRepository(repoName)
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	for _, p := range repo.Projects {
+	//		applicableFiles := findApplicableFiles(p, changedFiles)
+	//	}
+	//
+	//	// Assign each project a subslice of the changedFiles according to whether
+	//	// the file path starts with the project path
+	//
+	//	// Remove the project path prefix from each of the changed files in the
+	//	// assigned slice
+	//
+	//	// For each job under each (project, changedFiles) pair check if it matches
+	//	// the ref and the set of changed files, if it does then trigger the job
 
 	return nil
 }
+
+//func findApplicableFiles(project *g2j.Project, changedFiles []string) []string {
+//	dest := []string{}
+//	for _, cf := range changedFiles {
+//		if strings.HasPrefix(cf, project.Path) {
+//
+//		}
+//
+//	}
+//
+//}
 
 func (s TriggerService) findRepository(repoName string) (*g2j.Repository, error) {
 	for i := range s.config.Repositories {

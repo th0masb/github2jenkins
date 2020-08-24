@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -58,7 +59,7 @@ func NewMockBody(data string) *MockBody {
 // Response creates a mock http response with given status and body
 func Response(statusCode int, body io.ReadCloser) (*http.Response, error) {
 	resp := http.Response{
-		Status:     string(statusCode),
+		Status:     fmt.Sprint(statusCode),
 		StatusCode: statusCode,
 		Body:       body,
 	}
